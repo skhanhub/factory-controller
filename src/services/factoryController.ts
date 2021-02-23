@@ -8,7 +8,7 @@ interface IRecipes {
     };
     time: number;
     name: string;
-  };
+  } | null;
 }
 interface IInventory {
   [key: string]: number;
@@ -26,6 +26,7 @@ export default class FactoryController {
     for (const item in newInventory) {
       this.Inventory[item] =
         this.Inventory[item] + newInventory[item] || newInventory[item];
+      this.Recipes[item] = null;
       count++;
     }
     console.log(`Inventory loaded: ${count} unique components`);
