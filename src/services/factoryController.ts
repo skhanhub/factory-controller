@@ -53,4 +53,8 @@ export default class FactoryController {
       console.log(`${item}: ${this.Inventory[item]}`);
     }
   }
+
+  printRecipes() {
+    console.log(this.Recipes);
+  }
 }
