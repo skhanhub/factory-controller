@@ -1,3 +1,5 @@
+import inventory from "../data/inventory";
+
 interface IRecipes {
   [key: string]: {
     produces: {
@@ -16,6 +18,7 @@ interface IInventory {
 export default class FactoryController {
   Inventory: IInventory;
   Recipes: IRecipes;
+
   constructor() {
     this.Inventory = {};
     this.Recipes = {};
@@ -56,5 +59,57 @@ export default class FactoryController {
 
   printRecipes() {
     console.log(this.Recipes);
+  }
+
+  plan(item: string, quantity: number, level: number = 0) {
+    if (quantity === 0) return { sequence: [], required: {} };
+    else if (!this.Recipes[item]) {
+      return { sequence: [], required: { [item]: quantity } };
+    }
+    const itemRequired: any = { sequence: [], required: {} };
+    for (const itemConsumed in this.Recipes[item]?.consumes) {
+      if (this.Inventory[itemConsumed]) {
+        itemRequired.required[itemConsumed] =
+          this.Inventory[itemConsumed] >=
+          (this.Recipes[item]?.consumes[itemConsumed] || 0)
+            ? this.Recipes[item]?.consumes[itemConsumed] || 0
+            : this.Recipes[item]?.consumes[itemConsumed] ||
+              0 - this.Inventory[itemConsumed];
+      }
+
+      const tempItems: any = this.plan(
+        itemConsumed,
+        this.Recipes[item]?.consumes[itemConsumed] ||
+          0 - this.Inventory[itemConsumed] ||
+          0,
+        level + 1
+      );
+      if (
+        (this.Recipes[item]?.consumes[itemConsumed] || 0) >
+        (this.Inventory[itemConsumed] || 0)
+      ) {
+        itemRequired.sequence = [
+          ...itemRequired.sequence,
+          ...tempItems.sequence,
+        ];
+        for (
+          let i = 0;
+          i <
+          (this.Recipes[item]?.consumes[itemConsumed] || 0) -
+            (this.Inventory[itemConsumed] || 0);
+          i++
+        ) {
+          itemRequired.sequence.push(itemConsumed);
+        }
+      }
+
+      for (const newItem in tempItems.required) {
+        itemRequired.required[newItem] = itemRequired.required[newItem]
+          ? itemRequired.required[newItem] + tempItems.required[newItem]
+          : tempItems.required[newItem];
+      }
+    }
+    if (level === 0) itemRequired.sequence.push(item);
+    return itemRequired;
   }
 }
