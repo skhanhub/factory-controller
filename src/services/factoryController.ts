@@ -7,12 +7,21 @@ interface IRecipes {
     time: number;
   };
 }
-
+interface IInventory {
+  [key: string]: number;
+}
 export default class FactoryController {
-  Inventory: { [key: string]: number };
+  Inventory: IInventory;
   Recipes: IRecipes;
   constructor() {
     this.Inventory = {};
     this.Recipes = {};
+  }
+
+  loadInventory(newInventory: IInventory) {
+    for (const item in newInventory) {
+      this.Inventory[item] =
+        this.Inventory[item] + newInventory[item] || newInventory[item];
+    }
   }
 }
