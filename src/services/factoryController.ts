@@ -112,4 +112,33 @@ export default class FactoryController {
     if (level === 0) itemRequired.sequence.push(item);
     return itemRequired;
   }
+
+  build(item: string) {
+    let totalTime = 0;
+    const itemRequired = this.plan(item, 1);
+    for (item in itemRequired.required) {
+      if (itemRequired.required[item] > this.Inventory[item])
+        throw new Error(`Insufficient resources to build: ${item}`);
+    }
+    for (item of itemRequired.sequence) {
+      console.log(
+        `building recipe ${this.Recipes[item]?.name} in ${this.Recipes[item]?.time}s`
+      );
+      totalTime += this.Recipes[item]?.time || 0;
+      for (const consumedItem in this.Recipes[item]?.consumes) {
+        this.Inventory[consumedItem] -=
+          this.Recipes[item]?.consumes[consumedItem] || 0;
+      }
+      for (const producedItem in this.Recipes[item]?.produces) {
+        this.Inventory[producedItem] =
+          this.Inventory[producedItem] +
+            (this.Recipes[item]?.produces[producedItem] || 0) ||
+          this.Recipes[item]?.produces[producedItem] ||
+          0;
+      }
+      this.printInventory();
+    }
+    console.log(itemRequired);
+    console.log(`Total time ${totalTime}`);
+  }
 }
