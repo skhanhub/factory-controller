@@ -47,4 +47,10 @@ export default class FactoryController {
     }
     console.log(`Recipes loaded: ${count} total`);
   }
+
+  printInventory() {
+    for (const item in this.Inventory) {
+      console.log(`${item}: ${this.Inventory[item]}`);
+    }
+  }
 }
