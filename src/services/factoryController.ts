@@ -133,4 +133,13 @@ export default class FactoryController {
     }
     console.log(`Total time to build ${item} is ${totalTime}`);
   }
+
+  buildMultiple(itemsToBuild: Array<{ name: string; quantity: number }>) {
+    for (const item of itemsToBuild) {
+      for (let i = 0; i < item.quantity; i++) {
+        this.build(item.name);
+      }
+    }
+    this.printInventory();
+  }
 }
