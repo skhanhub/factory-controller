@@ -4,8 +4,12 @@
   "description": "",
   "main": "src/app.ts",
   "scripts": {
-    "start": "ts-node src/app.ts",
-    "build": "tsc"
+    "eslint": "eslint",
+    "test": "jest",
+    "coverage": "jest --coverage",
+    "build": "tsc",
+    "build:watch": "tsc --w",
+    "start": "ts-node ./src/app.ts"
   },
   "repository": {
     "type": "git",
@@ -19,7 +23,10 @@
   },
   "homepage": "https://github.com/skhanhub/factory-controller#readme",
   "devDependencies": {
+    "eslint": "^7.20.0",
+    "jest": "^26.6.3",
     "nodemon": "^2.0.7",
+    "ts-jest": "^26.5.2",
     "ts-node": "^9.1.1",
     "typescript": "^4.1.5"
   }
