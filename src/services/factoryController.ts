@@ -1,5 +1,3 @@
-import inventory from "../data/inventory";
-
 interface IRecipes {
   [key: string]: {
     produces: {
@@ -17,11 +15,15 @@ interface IInventory {
 }
 export default class FactoryController {
   Inventory: IInventory;
+  TempInventory: IInventory;
   Recipes: IRecipes;
+  CurrentBuild: string;
 
   constructor() {
     this.Inventory = {};
+    this.TempInventory = {};
     this.Recipes = {};
+    this.CurrentBuild = "";
   }
 
   loadInventory(newInventory: IInventory) {
@@ -62,83 +64,73 @@ export default class FactoryController {
   }
 
   plan(item: string, quantity: number, level: number = 0) {
-    if (quantity === 0) return { sequence: [], required: {} };
-    else if (!this.Recipes[item]) {
-      return { sequence: [], required: { [item]: quantity } };
+    if (level === 0) {
+      this.CurrentBuild = item;
+      this.TempInventory = { ...this.Inventory };
     }
-    const itemRequired: any = { sequence: [], required: {} };
-    for (const itemConsumed in this.Recipes[item]?.consumes) {
-      if (this.Inventory[itemConsumed]) {
-        itemRequired.required[itemConsumed] =
-          this.Inventory[itemConsumed] >=
-          (this.Recipes[item]?.consumes[itemConsumed] || 0)
-            ? this.Recipes[item]?.consumes[itemConsumed] || 0
-            : this.Recipes[item]?.consumes[itemConsumed] ||
-              0 - this.Inventory[itemConsumed];
+    if (quantity === 0) return [];
+    else if (!this.Recipes[item]) {
+      if (quantity > (this.TempInventory[item] || 0)) {
+        throw new Error(
+          `Insufficient resources to build: ${this.CurrentBuild}`
+        );
       }
-
-      const tempItems: any = this.plan(
-        itemConsumed,
-        this.Recipes[item]?.consumes[itemConsumed] ||
-          0 - this.Inventory[itemConsumed] ||
-          0,
-        level + 1
-      );
-      if (
-        (this.Recipes[item]?.consumes[itemConsumed] || 0) >
-        (this.Inventory[itemConsumed] || 0)
+      return [];
+    }
+    let sequence: Array<string> = [];
+    for (const itemConsumed in this.Recipes[item]?.consumes) {
+      for (
+        let j = 0;
+        j < (this.Recipes[item]?.consumes[itemConsumed] || 0);
+        j++
       ) {
-        itemRequired.sequence = [
-          ...itemRequired.sequence,
-          ...tempItems.sequence,
-        ];
-        for (
-          let i = 0;
-          i <
-          (this.Recipes[item]?.consumes[itemConsumed] || 0) -
-            (this.Inventory[itemConsumed] || 0);
-          i++
-        ) {
-          itemRequired.sequence.push(itemConsumed);
+        if ((this.TempInventory[itemConsumed] || 0) > 0) {
+          this.TempInventory[itemConsumed] =
+            (this.TempInventory[itemConsumed] || 0) - 1;
+        } else {
+          const tempItems = this.plan(itemConsumed, 1, level + 1);
+          sequence = [...sequence, ...tempItems];
+
+          for (const itemProduced in this.Recipes[itemConsumed]?.produces) {
+            this.TempInventory[itemProduced] =
+              (this.TempInventory[itemProduced] || 0) +
+              (this.Recipes[itemConsumed]?.produces[itemProduced] || 0);
+            if (itemProduced === itemConsumed) {
+              this.TempInventory[itemProduced] =
+                (this.TempInventory[itemProduced] || 0) - 1;
+              sequence.push(itemProduced);
+            }
+          }
         }
       }
-
-      for (const newItem in tempItems.required) {
-        itemRequired.required[newItem] = itemRequired.required[newItem]
-          ? itemRequired.required[newItem] + tempItems.required[newItem]
-          : tempItems.required[newItem];
-      }
     }
-    if (level === 0) itemRequired.sequence.push(item);
-    return itemRequired;
+
+    if (level === 0) {
+      for (const itemProduced in this.Recipes[item]?.produces) {
+        for (
+          let j = 0;
+          j < (this.Recipes[item]?.produces[itemProduced] || 0);
+          j++
+        ) {
+          this.TempInventory[itemProduced] =
+            (this.TempInventory[itemProduced] || 0) + 1;
+          if (itemProduced === item) sequence.push(itemProduced);
+        }
+      }
+      this.Inventory = { ...this.TempInventory };
+    }
+    return sequence;
   }
 
   build(item: string) {
     let totalTime = 0;
     const itemRequired = this.plan(item, 1);
-    for (item in itemRequired.required) {
-      if (itemRequired.required[item] > this.Inventory[item])
-        throw new Error(`Insufficient resources to build: ${item}`);
-    }
-    for (item of itemRequired.sequence) {
+    for (item of itemRequired) {
       console.log(
         `building recipe ${this.Recipes[item]?.name} in ${this.Recipes[item]?.time}s`
       );
       totalTime += this.Recipes[item]?.time || 0;
-      for (const consumedItem in this.Recipes[item]?.consumes) {
-        this.Inventory[consumedItem] -=
-          this.Recipes[item]?.consumes[consumedItem] || 0;
-      }
-      for (const producedItem in this.Recipes[item]?.produces) {
-        this.Inventory[producedItem] =
-          this.Inventory[producedItem] +
-            (this.Recipes[item]?.produces[producedItem] || 0) ||
-          this.Recipes[item]?.produces[producedItem] ||
-          0;
-      }
-      this.printInventory();
     }
-    console.log(itemRequired);
-    console.log(`Total time ${totalTime}`);
+    console.log(`Total time to build ${item} is ${totalTime}`);
   }
 }
