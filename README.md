@@ -6,11 +6,13 @@ Your task is to build a system that will instruct the factory what sub-component
 complete a larger order.
 
 You will be provided a starting inventory list and a “recipe” schema list, a recipe schema contains:
+
 ```
 ● A list of items required to build this recipe
 ● A list of items that are built as a result (it’s not always a single item)
 ● The time it takes to build this recipe
 ```
+
 If your factory cannot build all required sub-components for a build order, it should not build any of the
 sub-components, but instead fail that build task.
 
@@ -19,11 +21,13 @@ program will detect that you have no copper cables in the inventory and will fir
 the cables before attempting to build the electronic circuit.
 
 Once the program is complete, give your factory these build orders (in order):
+
 ```
 ● 3x electric_engine
 ● 5x electric_circuit
 ● 3x electric_engine
 ```
+
 The program should first build all required parts to complete each item, however it will also run out of
 resources and will not be able to complete the final electric_engine.
 ● Some of the 5x electric circuits should be consumed by the final build order
@@ -34,7 +38,7 @@ You should also display the time it took to build each build order. This may var
 of sub-components it requires to be built.
 Output the final state of the inventory once the program has completed.
 
-<img src="images/factory-controller.PNG">
+<img src="images/factory-controller.png">
 
 The project uses the following technologies:
 
