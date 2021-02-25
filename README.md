@@ -71,7 +71,7 @@ There are six methods in the FactoryController class:
 - npm run coverage         - will generate code coverage reports
 - npm run build            - will generate generate .js from the .ts files for production use
 - npm run build:watch      - will generate generate .js from the .ts files for production use and watch for changes
-- npm start                - will start the robot simulator app
+- npm start                - will run the app
 ```
 
 ## Project Structure
