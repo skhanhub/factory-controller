@@ -65,21 +65,29 @@ export default class FactoryController {
     console.log(this.Recipes);
   }
 
-  plan(item: string, quantity: number, level: number = 0) {
+  build(item: string, level: number = 0) {
+    const buildSequence: { sequence: string; time: number } = {
+      sequence: "",
+      time: 0,
+    };
+    let totalTime = 0;
     if (level === 0) {
       this.CurrentBuild = item;
       this.TempInventory = { ...this.Inventory };
     }
-    if (quantity === 0) return [];
-    else if (!this.Recipes[item]) {
-      if (quantity > (this.TempInventory[item] || 0)) {
+
+    if (!this.Recipes[item]) {
+      if ((this.TempInventory[item] || 0) === 0) {
         throw new Error(
-          `Insufficient resources to build: ${this.CurrentBuild}`
+          `Insufficient resources to build: ${this.CurrentBuild}\n`
         );
       }
-      return [];
+      return {
+        sequence: "",
+        time: 0,
+      };
     }
-    let sequence: Array<string> = [];
+
     for (const itemConsumed in this.Recipes[item]?.consumes) {
       for (
         let j = 0;
@@ -90,9 +98,9 @@ export default class FactoryController {
           this.TempInventory[itemConsumed] =
             (this.TempInventory[itemConsumed] || 0) - 1;
         } else {
-          const tempItems = this.plan(itemConsumed, 1, level + 1);
-          sequence = [...sequence, ...tempItems];
-
+          const tempItems = this.build(itemConsumed, level + 1);
+          buildSequence.sequence = buildSequence.sequence + tempItems.sequence;
+          totalTime += tempItems.time;
           for (const itemProduced in this.Recipes[itemConsumed]?.produces) {
             this.TempInventory[itemProduced] =
               (this.TempInventory[itemProduced] || 0) +
@@ -100,7 +108,14 @@ export default class FactoryController {
             if (itemProduced === itemConsumed) {
               this.TempInventory[itemProduced] =
                 (this.TempInventory[itemProduced] || 0) - 1;
-              sequence.push(itemProduced);
+              totalTime += this.Recipes[itemProduced]?.time || 0;
+              buildSequence.sequence = `${buildSequence.sequence}${" ".repeat(
+                2 * (level + 1)
+              )}> building recipe ${this.Recipes[itemProduced]?.name} in ${
+                this.Recipes[itemProduced]?.time
+              }s (${
+                tempItems.time + (this.Recipes[itemProduced]?.time || 0)
+              }s total)\n`;
             }
           }
         }
@@ -116,24 +131,23 @@ export default class FactoryController {
         ) {
           this.TempInventory[itemProduced] =
             (this.TempInventory[itemProduced] || 0) + 1;
-          if (itemProduced === item) sequence.push(itemProduced);
+          if (itemProduced === item)
+            buildSequence.sequence = `${buildSequence.sequence}${" ".repeat(
+              2 * level
+            )}> building recipe ${this.Recipes[itemProduced]?.name} in ${
+              this.Recipes[itemProduced]?.time || 0
+            }s (${
+              totalTime + (this.Recipes[itemProduced]?.time || 0)
+            }s total)\n`;
         }
       }
-      this.Inventory = { ...this.TempInventory };
-    }
-    return sequence;
-  }
-
-  build(item: string) {
-    let totalTime = 0;
-    const itemRequired = this.plan(item, 1);
-    for (item of itemRequired) {
-      console.log(
-        `building recipe ${this.Recipes[item]?.name} in ${this.Recipes[item]?.time}s`
-      );
       totalTime += this.Recipes[item]?.time || 0;
+      this.Inventory = { ...this.TempInventory };
+      console.log(buildSequence.sequence);
+      console.log(`Built ${item} in ${totalTime} seconds\n`);
     }
-    console.log(`Total time to build ${item} is ${totalTime}`);
+    buildSequence.time += totalTime;
+    return buildSequence;
   }
 
   buildMultiple(itemsToBuild: Array<{ name: string; quantity: number }>) {
