@@ -151,11 +151,13 @@ export default class FactoryController {
   }
 
   buildMultiple(itemsToBuild: Array<{ name: string; quantity: number }>) {
+    const builds = [];
     for (const item of itemsToBuild) {
       for (let i = 0; i < item.quantity; i++) {
-        this.build(item.name);
+        builds.push(this.build(item.name));
       }
     }
     this.printInventory();
+    return builds;
   }
 }
