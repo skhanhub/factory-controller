@@ -35,6 +35,7 @@ export default class FactoryController {
       count++;
     }
     console.log(`Inventory loaded: ${count} unique components`);
+    return this.Inventory;
   }
 
   loadRecipes(newRecipes: any) {
@@ -51,6 +52,7 @@ export default class FactoryController {
       }
     }
     console.log(`Recipes loaded: ${count} total`);
+    return this.Recipes;
   }
 
   printInventory() {
